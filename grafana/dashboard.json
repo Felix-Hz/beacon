@@ -1,0 +1,474 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_BEACON",
+      "label": "Analytics Engine",
+      "type": "datasource",
+      "pluginId": "vertamedia-clickhouse-datasource",
+      "pluginName": "Altinity plugin for ClickHouse"
+    }
+  ],
+  "title": "Site analytics",
+  "uid": "beacon-sites",
+  "timezone": "browser",
+  "time": {
+    "from": "now-30d",
+    "to": "now"
+  },
+  "refresh": "",
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "name": "site",
+        "label": "Site",
+        "type": "custom",
+        "query": "felix-hzv.dev,cofr.cash",
+        "current": {
+          "text": "felix-hzv.dev",
+          "value": "felix-hzv.dev"
+        },
+        "options": [
+          {
+            "text": "felix-hzv.dev",
+            "value": "felix-hzv.dev",
+            "selected": true
+          },
+          {
+            "text": "cofr.cash",
+            "value": "cofr.cash",
+            "selected": false
+          }
+        ]
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Views",
+      "type": "stat",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview'",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Visits",
+      "type": "stat",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT sum(_sample_interval * double2) AS visits FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview'",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Engaged time per view",
+      "type": "stat",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT sum(if(blob1 = 'engaged', _sample_interval * double1, 0)) / greatest(sum(if(blob1 = 'pageview', _sample_interval, 0)), 1) / 1000 AS seconds FROM beacon_events WHERE $timeFilter AND index1 = '$site'",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s"
+        },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "title": "Clicks",
+      "type": "stat",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT sum(_sample_interval) AS clicks FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 IN ('click', 'outbound')",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Views and visits",
+      "type": "timeseries",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 4,
+        "w": 24,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT $timeSeries AS t, sum(_sample_interval) AS views, sum(_sample_interval * double2) AS visits FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' GROUP BY t ORDER BY t",
+          "format": "time_series",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Pages",
+      "type": "table",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 12,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob2 AS page, sum(if(blob1 = 'pageview', _sample_interval, 0)) AS views, sum(if(blob1 = 'pageview', _sample_interval * double2, 0)) AS visits, round(sum(if(blob1 = 'engaged', _sample_interval * double1, 0)) / greatest(sum(if(blob1 = 'pageview', _sample_interval, 0)), 1) / 1000, 1) AS engaged_s_per_view FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 IN ('pageview', 'engaged') GROUP BY page ORDER BY views DESC LIMIT 50",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Referrers",
+      "type": "table",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob4 AS referrer, sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' AND double2 = 1 AND blob4 != '' GROUP BY referrer ORDER BY views DESC LIMIT 20",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "title": "Campaigns (utm_source)",
+      "type": "table",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 22,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob5 AS source, sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' AND blob5 != '' GROUP BY source ORDER BY views DESC LIMIT 20",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "title": "Countries",
+      "type": "table",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 22,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob6 AS country, sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' GROUP BY country ORDER BY views DESC LIMIT 20",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "title": "Devices",
+      "type": "piechart",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 31,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob7 AS device, sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' GROUP BY device ORDER BY views DESC LIMIT 20",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "Browsers",
+      "type": "piechart",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 31,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob8 AS browser, sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' GROUP BY browser ORDER BY views DESC LIMIT 20",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "title": "Operating systems",
+      "type": "piechart",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 31,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob9 AS os, sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' GROUP BY os ORDER BY views DESC LIMIT 20",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "title": "Languages",
+      "type": "piechart",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 31,
+        "w": 6,
+        "h": 8
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob10 AS language, sum(_sample_interval) AS views FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'pageview' GROUP BY language ORDER BY views DESC LIMIT 20",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "title": "Clicks (data-event)",
+      "type": "table",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 39,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob3 AS event, blob2 AS page, sum(_sample_interval) AS clicks FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'click' GROUP BY event, page ORDER BY clicks DESC LIMIT 50",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Outbound links",
+      "type": "table",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 39,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob3 AS destination, sum(_sample_interval) AS clicks FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 = 'outbound' GROUP BY destination ORDER BY clicks DESC LIMIT 50",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    }
+  ]
+}

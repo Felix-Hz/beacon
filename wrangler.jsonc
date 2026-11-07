@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "beacon",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-11-01",
+  // Served only on the e.cofr.cash custom domain, attached once through the API so the
+  // deploy token needs no zone permissions.
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": {
+    "ALLOWED_ORIGINS": "https://felix-hzv.dev,https://cofr.cash"
+  },
+  "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "beacon_events" }],
+  "ratelimits": [
+    {
+      "name": "LIMITER",
+      // Account-unique integer; a binding elsewhere with the same id shares counters.
+      "namespace_id": "7301",
+      "simple": { "limit": 120, "period": 60 }
+    }
+  ],
+  // The Workers vitest plugin reads this rule; wrangler's bundler needs the import attribute in src/index.ts instead.
+  "rules": [{ "type": "Text", "globs": ["client/*.js"], "fallthrough": false }],
+  "observability": { "enabled": true, "head_sampling_rate": 0.1 }
+}
