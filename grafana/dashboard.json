@@ -121,7 +121,7 @@
             "uid": "${DS_BEACON}"
           },
           "refId": "A",
-          "query": "SELECT sum(if(blob1 = 'engaged', _sample_interval * double1, 0)) / greatest(sum(if(blob1 = 'pageview', _sample_interval, 0)), 1) / 1000 AS seconds FROM beacon_events WHERE $timeFilter AND index1 = '$site'",
+          "query": "SELECT if(sum(if(blob1 = 'pageview', _sample_interval, 0)) = 0, 0.0, sum(if(blob1 = 'engaged', _sample_interval * double1, 0.0)) / sum(if(blob1 = 'pageview', _sample_interval, 0)) / 1000) AS seconds FROM beacon_events WHERE $timeFilter AND index1 = '$site'",
           "format": "table",
           "dateTimeColDataType": "timestamp",
           "rawQuery": true
@@ -211,7 +211,7 @@
             "uid": "${DS_BEACON}"
           },
           "refId": "A",
-          "query": "SELECT blob2 AS page, sum(if(blob1 = 'pageview', _sample_interval, 0)) AS views, sum(if(blob1 = 'pageview', _sample_interval * double2, 0)) AS visits, round(sum(if(blob1 = 'engaged', _sample_interval * double1, 0)) / greatest(sum(if(blob1 = 'pageview', _sample_interval, 0)), 1) / 1000, 1) AS engaged_s_per_view FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 IN ('pageview', 'engaged') GROUP BY page ORDER BY views DESC LIMIT 50",
+          "query": "SELECT blob2 AS page, sum(if(blob1 = 'pageview', _sample_interval, 0)) AS views, sum(if(blob1 = 'pageview', _sample_interval * double2, 0.0)) AS visits, round(if(sum(if(blob1 = 'pageview', _sample_interval, 0)) = 0, 0.0, sum(if(blob1 = 'engaged', _sample_interval * double1, 0.0)) / sum(if(blob1 = 'pageview', _sample_interval, 0)) / 1000), 1) AS engaged_s_per_view FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 IN ('pageview', 'engaged') GROUP BY page ORDER BY views DESC LIMIT 50",
           "format": "table",
           "dateTimeColDataType": "timestamp",
           "rawQuery": true

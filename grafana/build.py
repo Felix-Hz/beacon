@@ -13,6 +13,9 @@ DS = {"type": "vertamedia-clickhouse-datasource", "uid": "${DS_BEACON}"}
 TABLE = "beacon_events"
 SITE = "index1 = '$site'"
 W = "_sample_interval"
+VIEWS = f"sum(if(blob1 = 'pageview', {W}, 0))"
+# The Analytics Engine dialect has no greatest(), and if() branches must share a type (0.0 for doubles)
+ENGAGED_PER_VIEW = f"if({VIEWS} = 0, 0.0, sum(if(blob1 = 'engaged', {W} * double1, 0.0)) / {VIEWS} / 1000)"
 
 
 def query(sql: str, fmt: str) -> dict:
@@ -40,8 +43,7 @@ panels = [
         3,
         "Engaged time per view",
         "stat",
-        f"""SELECT sum(if(blob1 = 'engaged', {W} * double1, 0)) / greatest(sum(if(blob1 = 'pageview', {W}, 0)), 1) / 1000 AS seconds
-            FROM {TABLE} WHERE $timeFilter AND {SITE}""",
+        f"""SELECT {ENGAGED_PER_VIEW} AS seconds FROM {TABLE} WHERE $timeFilter AND {SITE}""",
         (12, 0, 6, 4),
         unit="s",
     ),
@@ -59,8 +61,8 @@ panels = [
         6,
         "Pages",
         "table",
-        f"""SELECT blob2 AS page, sum(if(blob1 = 'pageview', {W}, 0)) AS views, sum(if(blob1 = 'pageview', {W} * double2, 0)) AS visits,
-            round(sum(if(blob1 = 'engaged', {W} * double1, 0)) / greatest(sum(if(blob1 = 'pageview', {W}, 0)), 1) / 1000, 1) AS engaged_s_per_view
+        f"""SELECT blob2 AS page, sum(if(blob1 = 'pageview', {W}, 0)) AS views, sum(if(blob1 = 'pageview', {W} * double2, 0.0)) AS visits,
+            round({ENGAGED_PER_VIEW}, 1) AS engaged_s_per_view
             FROM {TABLE} WHERE $timeFilter AND {SITE} AND blob1 IN ('pageview', 'engaged')
             GROUP BY page ORDER BY views DESC LIMIT 50""",
         (0, 12, 24, 10),

@@ -1,47 +1,54 @@
 # beacon
 
-Cookieless analytics for felix-hzv.dev and the cofr.cash landing: a Cloudflare Worker at `https://e.cofr.cash` that records page views, clicks and engaged time in Workers Analytics Engine, viewed in Grafana.
+Cookieless page analytics on a Cloudflare Worker. Sites load one script, events go to Workers Analytics Engine, and Grafana reads them.
 
-## What it records
-
-No cookies, no storage in the browser, no visitor identifier. The IP address is used only as the rate-limit key and is never stored; the User-Agent header is reduced to device class, browser family and OS family, then discarded.
-
-| Event      | Sent when                                     | Fields kept                                                                                               |
-| ---------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `pageview` | page load and each in-site route change       | path, visit flag (page load from another site or with no referrer), referrer host, `utm_source`, language |
-| `click`    | click on an element with `data-event="name"`  | path, the `data-event` value                                                                              |
-| `outbound` | click on a link to another host, or `mailto:` | path, destination host                                                                                    |
-| `engaged`  | tab hidden, page closed or route changed      | path, milliseconds the tab was visible, capped at 30 minutes                                              |
-
-Every event also gets the site (from the `Origin` header, never the request body), country, device, browser and OS. Requests from other origins get 403, bots are dropped, and each IP is limited to 120 events a minute per Cloudflare location. Data is kept for three months.
-
-## Use on a site
+## Add it to a site
 
 ```html
-<script defer src="https://e.cofr.cash/b.js"></script>
+<script defer src="https://e.felix-hzv.dev/b.js"></script>
 ```
 
-Add the site's origin to `ALLOWED_ORIGINS` in `wrangler.jsonc`. Mark anything worth counting as a click with `data-event`, e.g. `<a data-event="share:linkedin">`. Labels match `[\w:./@-]{1,64}`.
+Then add the site's origin to `ALLOWED_ORIGINS` in `wrangler.jsonc`. Requests from any other origin are rejected.
+
+To count a click, give the element a `data-event` name:
+
+```html
+<a href="/pricing" data-event="cta:pricing">Pricing</a>
+```
+
+## What gets recorded
+
+- `pageview`: path, referring site, `utm_source`, language, and whether it started a visit
+- `click`: path and the `data-event` name
+- `outbound`: path and the destination host
+- `engaged`: path and how long the tab was visible
+
+Each event also gets the site, country, device type, browser and OS. There are no cookies and no IDs, so visits can't be linked to each other or to a person. The IP is only used for rate limiting and is never stored. Bots are dropped. Data is kept for three months.
 
 ## Develop
 
-Node 22 or later.
+Needs Node 22+.
 
 ```sh
 npm ci
-npm test            # Vitest in the Workers runtime
+npm test
 npm run typecheck
 npm run lint
-npm run check       # bundle with wrangler, no deploy
+npm run check   # bundle without deploying
 ```
 
-## Deploy
-
-`deploy.yml` runs `wrangler deploy` on every push to `main`, with repository secret `CLOUDFLARE_API_TOKEN` (Account > Workers Scripts > Edit, this account only) and variable `CLOUDFLARE_ACCOUNT_ID`. The `e.cofr.cash` custom domain is attached once outside the workflow, so the token needs no zone permissions.
+Pushes to `main` deploy through `deploy.yml`, using the `CLOUDFLARE_API_TOKEN` secret (Workers Scripts edit) and the `CLOUDFLARE_ACCOUNT_ID` variable.
 
 ## Query
 
-Analytics Engine SQL API, dataset `beacon_events`. Columns: `index1` site; `blob1` event, `blob2` path, `blob3` label, `blob4` referrer host, `blob5` utm source, `blob6` country, `blob7` device, `blob8` browser, `blob9` OS, `blob10` language; `double1` engaged ms, `double2` visit flag. Weight every count by `_sample_interval`.
+Dataset `beacon_events`. Weight counts by `_sample_interval`.
+
+| Column              | Value                                                                            |
+| ------------------- | -------------------------------------------------------------------------------- |
+| `index1`            | site                                                                             |
+| `blob1` to `blob10` | event, path, label, referrer, utm source, country, device, browser, OS, language |
+| `double1`           | engaged milliseconds                                                             |
+| `double2`           | 1 if the page view started a visit                                               |
 
 ```sql
 SELECT blob2 AS page, sum(_sample_interval) AS views
@@ -52,6 +59,4 @@ GROUP BY page ORDER BY views DESC LIMIT 20
 
 ## Grafana
 
-1. Install the Altinity plugin for ClickHouse (`vertamedia-clickhouse-datasource`).
-2. Add a data source with URL `https://api.cloudflare.com/client/v4/accounts/{account_id}/analytics_engine/sql`, every auth option off, and a custom header `Authorization: Bearer {token}`, using a token with Account > Account Analytics > Read.
-3. Import `grafana/dashboard.json` and pick that data source. Panels are generated by `grafana/build.py`.
+Install the Altinity ClickHouse plugin and add a data source pointing at `https://api.cloudflare.com/client/v4/accounts/{account_id}/analytics_engine/sql`. Turn off its auth options and add the header `Authorization: Bearer {token}`, using a token with Account Analytics read. Then import `grafana/dashboard.json`.
