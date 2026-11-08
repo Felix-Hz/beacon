@@ -60,3 +60,5 @@ GROUP BY page ORDER BY views DESC LIMIT 20
 ## Grafana
 
 Install the Altinity ClickHouse plugin and add a data source pointing at `https://api.cloudflare.com/client/v4/accounts/{account_id}/analytics_engine/sql`. Turn off its auth options and add the header `Authorization: Bearer {token}`, using a token with Account Analytics read. Then import `grafana/dashboard.json`.
+
+Or let `python3 grafana/setup.py` do it. It reads a Grafana service account token and the Cloudflare token from Bitwarden, creates the data source and imports the dashboard. Panels are defined in `grafana/build.py`.
