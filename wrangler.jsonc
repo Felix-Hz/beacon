@@ -8,7 +8,9 @@
   "workers_dev": false,
   "preview_urls": false,
   "vars": {
-    "ALLOWED_ORIGINS": "https://felix-hzv.dev,https://cofr.cash"
+    "ALLOWED_ORIGINS": "https://felix-hzv.dev,https://cofr.cash",
+    // Pages per site; * is one slug segment. Any other path is stored as "(other)".
+    "ALLOWED_PATHS": "{\"felix-hzv.dev\":[\"/\",\"/blog\",\"/blog/*\"],\"cofr.cash\":[\"/\",\"/terms\",\"/privacy\"]}"
   },
   "analytics_engine_datasets": [{ "binding": "EVENTS", "dataset": "beacon_events" }],
   "ratelimits": [
@@ -16,7 +18,7 @@
       "name": "LIMITER",
       // Account-unique integer; a binding elsewhere with the same id shares counters.
       "namespace_id": "7301",
-      "simple": { "limit": 120, "period": 60 }
+      "simple": { "limit": 60, "period": 60 }
     }
   ],
   // The Workers vitest plugin reads this rule; wrangler's bundler needs the import attribute in src/index.ts instead.

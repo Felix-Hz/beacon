@@ -16,6 +16,7 @@ const testEnv = (): Env =>
   ({
     ...env,
     ALLOWED_ORIGINS: "https://felix-hzv.dev,https://cofr.cash",
+    ALLOWED_PATHS: JSON.stringify({ "felix-hzv.dev": ["/", "/blog", "/blog/*"], "cofr.cash": ["/", "/terms", "/privacy"] }),
     EVENTS: { writeDataPoint: (point?: AnalyticsEngineDataPoint) => point && points.push(point) },
     LIMITER: {
       limit: async ({ key }: { key: string }) => {
@@ -25,11 +26,22 @@ const testEnv = (): Env =>
     },
   }) as unknown as Env;
 
-function post(body: unknown, init: { origin?: string; ua?: string; raw?: string; country?: string } = {}) {
-  const headers: Record<string, string> = { "Content-Type": "text/plain;charset=UTF-8", "CF-Connecting-IP": "203.0.113.7" };
+type PostInit = { origin?: string; ua?: string; raw?: string; country?: string; headers?: Record<string, string | null> };
+
+function post(body: unknown, init: PostInit = {}) {
+  const headers: Record<string, string> = {
+    "Content-Type": "text/plain;charset=UTF-8",
+    "CF-Connecting-IP": "203.0.113.7",
+    "Sec-Fetch-Site": "same-site",
+    "Sec-Fetch-Mode": "no-cors",
+  };
   if (init.origin !== undefined) headers.Origin = init.origin;
   else headers.Origin = "https://felix-hzv.dev";
   headers["User-Agent"] = init.ua ?? CHROME;
+  for (const [name, value] of Object.entries(init.headers ?? {})) {
+    if (value === null) delete headers[name];
+    else headers[name] = value;
+  }
   const request = new Request("https://e.felix-hzv.dev/e", {
     method: "POST",
     headers,
@@ -57,6 +69,34 @@ describe("collect", () => {
         doubles: [0, 1],
       },
     ]);
+  });
+
+  it("rejects requests that don't look like a browser beacon", async () => {
+    const cases: Record<string, string | null>[] = [
+      { "Sec-Fetch-Site": null },
+      { "Sec-Fetch-Mode": null },
+      { "Sec-Fetch-Site": "none" },
+      { "Sec-Fetch-Mode": "navigate" },
+      { "Content-Type": "application/json" },
+    ];
+    for (const headers of cases) {
+      expect((await post({ e: "pageview", p: "/" }, { headers })).status, JSON.stringify(headers)).toBe(403);
+    }
+    expect(points).toHaveLength(0);
+  });
+
+  it("accepts a cross-site beacon from cofr.cash", async () => {
+    const response = await post({ e: "pageview", p: "/" }, { origin: "https://cofr.cash", headers: { "Sec-Fetch-Site": "cross-site" } });
+    expect(response.status).toBe(204);
+  });
+
+  it("stores only known page paths, anything else as (other)", async () => {
+    await post({ e: "pageview", p: "/blog/my-first-post/" });
+    await post({ e: "pageview", p: "/wp-admin/setup.php" });
+    await post({ e: "pageview", p: "/blog/Some.Email@example.com" });
+    await post({ e: "pageview", p: "/terms" });
+    await post({ e: "pageview", p: "/terms" }, { origin: "https://cofr.cash", headers: { "Sec-Fetch-Site": "cross-site" } });
+    expect(points.map((p) => p.blobs?.[1])).toEqual(["/blog/my-first-post", "(other)", "(other)", "(other)", "/terms"]);
   });
 
   it("takes the site from Origin, never the body", async () => {
