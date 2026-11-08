@@ -1,5 +1,5 @@
 // Cookieless analytics client, served by the Worker at /b.js and loaded with
-// <script defer src="https://e.cofr.cash/b.js">. No identifiers, no storage.
+// <script defer src="https://e.felix-hzv.dev/b.js">. No identifiers, no storage.
 (() => {
   const script = document.currentScript;
   if (!script || !navigator.sendBeacon) return;

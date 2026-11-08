@@ -27,7 +27,7 @@ jobs:
       - run: npm ci
       - run: npm test
 
-      # Token scope: Account > Workers Scripts > Edit on this account only. The e.cofr.cash
+      # Token scope: Account > Workers Scripts > Edit on this account only. The e.felix-hzv.dev
       # custom domain is attached outside this workflow, so no zone permission is needed.
       - run: npx wrangler deploy
         env:

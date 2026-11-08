@@ -3,7 +3,7 @@
   "name": "beacon",
   "main": "src/index.ts",
   "compatibility_date": "2026-11-01",
-  // Served only on the e.cofr.cash custom domain, attached once through the API so the
+  // Served only on the e.felix-hzv.dev custom domain, attached once through the API so the
   // deploy token needs no zone permissions.
   "workers_dev": false,
   "preview_urls": false,

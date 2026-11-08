@@ -30,7 +30,7 @@ function post(body: unknown, init: { origin?: string; ua?: string; raw?: string;
   if (init.origin !== undefined) headers.Origin = init.origin;
   else headers.Origin = "https://felix-hzv.dev";
   headers["User-Agent"] = init.ua ?? CHROME;
-  const request = new Request("https://e.cofr.cash/e", {
+  const request = new Request("https://e.felix-hzv.dev/e", {
     method: "POST",
     headers,
     body: init.raw ?? JSON.stringify(body),
@@ -118,7 +118,7 @@ describe("collect", () => {
   });
 
   it("answers the CORS preflight for allowed origins", async () => {
-    const request = new Request("https://e.cofr.cash/e", { method: "OPTIONS", headers: { Origin: "https://cofr.cash" } });
+    const request = new Request("https://e.felix-hzv.dev/e", { method: "OPTIONS", headers: { Origin: "https://cofr.cash" } });
     const response = await worker.fetch(request as Request<unknown, IncomingRequestCfProperties>, testEnv());
     expect(response.status).toBe(204);
     expect(response.headers.get("Access-Control-Allow-Origin")).toBe("https://cofr.cash");
@@ -128,7 +128,7 @@ describe("collect", () => {
 describe("routes", () => {
   it("serves the client script", async () => {
     const response = await worker.fetch(
-      new Request("https://e.cofr.cash/b.js") as Request<unknown, IncomingRequestCfProperties>,
+      new Request("https://e.felix-hzv.dev/b.js") as Request<unknown, IncomingRequestCfProperties>,
       testEnv(),
     );
     expect(response.status).toBe(200);
@@ -139,7 +139,10 @@ describe("routes", () => {
   });
 
   it("returns 404 elsewhere", async () => {
-    const response = await worker.fetch(new Request("https://e.cofr.cash/") as Request<unknown, IncomingRequestCfProperties>, testEnv());
+    const response = await worker.fetch(
+      new Request("https://e.felix-hzv.dev/") as Request<unknown, IncomingRequestCfProperties>,
+      testEnv(),
+    );
     expect(response.status).toBe(404);
   });
 });
