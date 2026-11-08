@@ -10,6 +10,8 @@ Cookieless page analytics on a Cloudflare Worker. Sites load one script, events 
 
 Then add the site's origin to `ALLOWED_ORIGINS` in `wrangler.jsonc`. Requests from any other origin are rejected.
 
+For a site on another domain, attach a hostname on that domain's zone to the same Worker (cofr.cash uses `e.cofr.cash`) and load the script from there. Content blockers drop cross-site beacons; a same-site one gets through.
+
 To count a click, give the element a `data-event` name:
 
 ```html
