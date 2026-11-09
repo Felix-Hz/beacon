@@ -5,8 +5,8 @@
     python3 grafana/setup.py --check    report what exists, change nothing
 
 Reads two Bitwarden items through the bw CLI (BW_SESSION, or the key in ~/.bw_session):
-  "Grafana service account token"   password: the token; URI or username: the stack, https://{name}.grafana.net
-  "Cloudflare analytics read token"  password: a Cloudflare token with Account Analytics Read only
+  "Grafana - service account token"    password: the token; URI or username: the stack, https://{name}.grafana.net
+  "Cloudflare - analytics read token"  password: a Cloudflare token with Account Analytics Read only
 Neither value is printed or written to disk. Standard library only.
 """
 
@@ -80,12 +80,12 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
-    item = bw_item("Grafana service account token")
+    item = bw_item("Grafana - service account token")
     login = item.get("login") or {}
     candidates = [u.get("uri", "") for u in login.get("uris") or []] + [login.get("username") or ""]
     stack = next((c for c in candidates if c.startswith("https://") and ".grafana.net" in c), "")
     if not stack:
-        sys.exit('Set the stack URL (https://{name}.grafana.net) as the URI or username of "Grafana service account token"')
+        sys.exit('Set the stack URL (https://{name}.grafana.net) as the URI or username of "Grafana - service account token"')
     grafana = Grafana(stack, item["login"]["password"])
 
     status, plugin = grafana.call("GET", f"/api/plugins/{PLUGIN}/settings")
@@ -96,7 +96,7 @@ def main() -> int:
     if args.check:
         return 0
 
-    body = datasource(bw_item("Cloudflare analytics read token")["login"]["password"])
+    body = datasource(bw_item("Cloudflare - analytics read token")["login"]["password"])
     if status == 200:
         status, result = grafana.call("PUT", f"/api/datasources/uid/{DS_UID}", body)
     else:
