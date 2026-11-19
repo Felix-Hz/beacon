@@ -219,6 +219,34 @@
       ]
     },
     {
+      "id": 16,
+      "title": "Photos",
+      "type": "table",
+      "datasource": {
+        "type": "vertamedia-clickhouse-datasource",
+        "uid": "${DS_BEACON}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "vertamedia-clickhouse-datasource",
+            "uid": "${DS_BEACON}"
+          },
+          "refId": "A",
+          "query": "SELECT blob2 AS photo, sum(if(blob1 = 'pageview', _sample_interval, 0)) AS views, sum(if(blob1 = 'pageview', _sample_interval * double2, 0.0)) AS visits, round(if(sum(if(blob1 = 'pageview', _sample_interval, 0)) = 0, 0.0, sum(if(blob1 = 'engaged', _sample_interval * double1, 0.0)) / sum(if(blob1 = 'pageview', _sample_interval, 0)) / 1000), 1) AS engaged_s_per_view FROM beacon_events WHERE $timeFilter AND index1 = '$site' AND blob1 IN ('pageview', 'engaged') AND blob2 LIKE '/gallery/%' GROUP BY photo ORDER BY views DESC LIMIT 200",
+          "format": "table",
+          "dateTimeColDataType": "timestamp",
+          "rawQuery": true
+        }
+      ]
+    },
+    {
       "id": 7,
       "title": "Referrers",
       "type": "table",
@@ -228,7 +256,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 22,
+        "y": 32,
         "w": 8,
         "h": 9
       },
@@ -256,7 +284,7 @@
       },
       "gridPos": {
         "x": 8,
-        "y": 22,
+        "y": 32,
         "w": 8,
         "h": 9
       },
@@ -284,7 +312,7 @@
       },
       "gridPos": {
         "x": 16,
-        "y": 22,
+        "y": 32,
         "w": 8,
         "h": 9
       },
@@ -312,7 +340,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 31,
+        "y": 41,
         "w": 6,
         "h": 8
       },
@@ -340,7 +368,7 @@
       },
       "gridPos": {
         "x": 6,
-        "y": 31,
+        "y": 41,
         "w": 6,
         "h": 8
       },
@@ -368,7 +396,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 31,
+        "y": 41,
         "w": 6,
         "h": 8
       },
@@ -396,7 +424,7 @@
       },
       "gridPos": {
         "x": 18,
-        "y": 31,
+        "y": 41,
         "w": 6,
         "h": 8
       },
@@ -424,7 +452,7 @@
       },
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 49,
         "w": 12,
         "h": 10
       },
@@ -452,7 +480,7 @@
       },
       "gridPos": {
         "x": 12,
-        "y": 39,
+        "y": 49,
         "w": 12,
         "h": 10
       },
