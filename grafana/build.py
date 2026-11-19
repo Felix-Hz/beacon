@@ -67,20 +67,31 @@ panels = [
             GROUP BY page ORDER BY views DESC LIMIT 50""",
         (0, 12, 24, 10),
     ),
-    panel(7, "Referrers", "table", top("blob4", "referrer", extra="AND double2 = 1 AND blob4 != ''"), (0, 22, 8, 9)),
-    panel(8, "Campaigns (utm_source)", "table", top("blob5", "source", extra="AND blob5 != ''"), (8, 22, 8, 9)),
-    panel(9, "Countries", "table", top("blob6", "country"), (16, 22, 8, 9)),
-    panel(10, "Devices", "piechart", top("blob7", "device"), (0, 31, 6, 8)),
-    panel(11, "Browsers", "piechart", top("blob8", "browser"), (6, 31, 6, 8)),
-    panel(12, "Operating systems", "piechart", top("blob9", "os"), (12, 31, 6, 8)),
-    panel(13, "Languages", "piechart", top("blob10", "language"), (18, 31, 6, 8)),
+    # One row per photo page, so the most opened photos are not crowded out of Pages' 50 rows
+    panel(
+        16,
+        "Photos",
+        "table",
+        f"""SELECT blob2 AS photo, sum(if(blob1 = 'pageview', {W}, 0)) AS views, sum(if(blob1 = 'pageview', {W} * double2, 0.0)) AS visits,
+            round({ENGAGED_PER_VIEW}, 1) AS engaged_s_per_view
+            FROM {TABLE} WHERE $timeFilter AND {SITE} AND blob1 IN ('pageview', 'engaged') AND blob2 LIKE '/gallery/%'
+            GROUP BY photo ORDER BY views DESC LIMIT 200""",
+        (0, 22, 24, 10),
+    ),
+    panel(7, "Referrers", "table", top("blob4", "referrer", extra="AND double2 = 1 AND blob4 != ''"), (0, 32, 8, 9)),
+    panel(8, "Campaigns (utm_source)", "table", top("blob5", "source", extra="AND blob5 != ''"), (8, 32, 8, 9)),
+    panel(9, "Countries", "table", top("blob6", "country"), (16, 32, 8, 9)),
+    panel(10, "Devices", "piechart", top("blob7", "device"), (0, 41, 6, 8)),
+    panel(11, "Browsers", "piechart", top("blob8", "browser"), (6, 41, 6, 8)),
+    panel(12, "Operating systems", "piechart", top("blob9", "os"), (12, 41, 6, 8)),
+    panel(13, "Languages", "piechart", top("blob10", "language"), (18, 41, 6, 8)),
     panel(
         14,
         "Clicks (data-event)",
         "table",
         f"""SELECT blob3 AS event, blob2 AS page, sum({W}) AS clicks FROM {TABLE}
             WHERE $timeFilter AND {SITE} AND blob1 = 'click' GROUP BY event, page ORDER BY clicks DESC LIMIT 50""",
-        (0, 39, 12, 10),
+        (0, 49, 12, 10),
     ),
     panel(
         15,
@@ -88,7 +99,7 @@ panels = [
         "table",
         f"""SELECT blob3 AS destination, sum({W}) AS clicks FROM {TABLE}
             WHERE $timeFilter AND {SITE} AND blob1 = 'outbound' GROUP BY destination ORDER BY clicks DESC LIMIT 50""",
-        (12, 39, 12, 10),
+        (12, 49, 12, 10),
     ),
 ]
 
